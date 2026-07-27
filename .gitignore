@@ -1,0 +1,36 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# dlt
+.dlt/
+*.duckdb
+
+# Model cache
+.fastembed_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Docs stay local — specs, plans, status ledger, and notes are never pushed to the remote
+docs/
+
+# Claude Code (see https://code.claude.com/docs/en/claude-directory)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Superpowers SDD scratch (task briefs, reports, review packages, progress ledger)
+.superpowers/
