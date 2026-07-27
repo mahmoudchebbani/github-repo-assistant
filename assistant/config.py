@@ -5,6 +5,7 @@ from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +30,22 @@ class Settings(BaseSettings):
     answer_prompt: Literal["A", "B"]
     top_k: int
     max_retries: int
+
+    @model_validator(mode="after")
+    def _check_chunk_overlap(self) -> "Settings":
+        """Reject an overlap that would hang or silently drop text in `chunk_text`.
+
+        An overlap equal to `chunk_chars` makes the packer's window stop advancing
+        (an infinite loop); an overlap greater than it skips forward past unseen
+        text (silent data loss). Both were confirmed by running `chunk_text`, not
+        assumed from reading it.
+        """
+        if self.chunk_overlap >= self.chunk_chars:
+            raise ValueError(
+                f"chunk_overlap ({self.chunk_overlap}) must be less than "
+                f"chunk_chars ({self.chunk_chars})"
+            )
+        return self
 
 
 @lru_cache
