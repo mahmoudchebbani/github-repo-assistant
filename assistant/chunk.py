@@ -72,9 +72,15 @@ def build_chunk_id(record: RawRecord, ordinal: int) -> str:
 
 
 def chunk_record(record: RawRecord, repo: str) -> list[Chunk]:
-    """Split one raw record into chunks, each carrying its own citation."""
+    """Split one raw record into chunks, each carrying its own citation.
+
+    A record with an empty body (a title-only issue) still gets one chunk, carrying
+    just the title: the title is the only content it has, and `chunk_text("")`
+    returns `[]`, so without this fallback the record would silently vanish from
+    the index instead of raising anything.
+    """
     settings = get_settings()
-    texts = chunk_text(record.body, settings.chunk_chars, settings.chunk_overlap)
+    texts = chunk_text(record.body, settings.chunk_chars, settings.chunk_overlap) or [""]
     citation = build_citation(record, repo)
     return [
         Chunk(
@@ -84,7 +90,7 @@ def chunk_record(record: RawRecord, repo: str) -> list[Chunk]:
             title=record.title,
             url=record.url,
             citation=citation,
-            text=f"{record.title}\n\n{text}",
+            text=f"{record.title}{PARAGRAPH_SEPARATOR}{text}" if text else record.title,
         )
         for ordinal, text in enumerate(texts)
     ]
