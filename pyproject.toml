@@ -1,0 +1,35 @@
+[project]
+name = "github-repo-assistant"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dlt[postgres]>=1.29.1",
+    "fastembed>=0.8.0",
+    "langchain-openai>=1.4.1",
+    "langgraph>=1.2.9",
+    "llama-index-core>=0.14.23",
+    "matplotlib>=3.11.1",
+    "pandas>=3.0.5",
+    "pgvector>=0.5.0",
+    "psycopg[binary]>=3.3.4",
+    "pydantic-settings>=2.14.2",
+    "streamlit>=1.60.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "python-dotenv>=1.2.2",
+    "ruff>=0.16.0",
+    "testcontainers[postgres]>=4.15.0",
+]
+
+[tool.pytest.ini_options]
+# The project has no build-system/packaging, so pytest never sees the repo root
+# on sys.path by default; "assistant" would be unimportable from tests/ without this.
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
