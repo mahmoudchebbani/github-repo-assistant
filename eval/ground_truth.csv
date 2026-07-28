@@ -1,0 +1,51 @@
+question,chunk_id,repo,source_type
+"How does the compute_relevance function behave when applied to homework, given that it expects an 'id' key?",a5b41ae67eed,datatalksclub/llm-zoomcamp,issue
+What is the recommended solution for overcoming local hardware limitations when evaluating models?,e9df600255ab,datatalksclub/llm-zoomcamp,issue
+What happened when the user submitted their answers for Homework 1?,f43571a98606,datatalksclub/llm-zoomcamp,issue
+What should I do to avoid a recursion error when using the ConsoleSpanExporter with Python 3.14?,ac26190b4116,datatalksclub/llm-zoomcamp,issue
+How can I set up a cloud API for an evaluation pipeline using local hardware?,ca9e8d1f5aab,datatalksclub/llm-zoomcamp,issue
+What are the potential issues identified in the SQLite vector search implementation regarding search result quality?,b04718a951d3,datatalksclub/llm-zoomcamp,issue
+What issues can arise in SQLite vector search due to the post-filtering mechanism?,07fe23ff9b82,datatalksclub/llm-zoomcamp,issue
+How can a user avoid a RecursionError with the ConsoleSpanExporter in Python 3.14?,952f4c07cf18,datatalksclub/llm-zoomcamp,issue
+What are the key recommendations for evaluating and integrating models in a cloud environment?,b707cffaf396,datatalksclub/llm-zoomcamp,issue
+What key should be used for matching filenames in the evaluation metrics for the homework assignment?,ef80e44c23ac,datatalksclub/llm-zoomcamp,issue
+What is the purpose of the SQLiteSpanExporter class in the context of exporting spans?,da4bbe5cfecc,datatalksclub/llm-zoomcamp,issue
+What issue occurs when using the ConsoleSpanExporter with Python 3.14 in OpenTelemetry?,9d59efc50dd7,datatalksclub/llm-zoomcamp,issue
+What are the key technical insights regarding model compatibility and integration overhead in RAG workflows?,892705cdae6a,datatalksclub/llm-zoomcamp,issue
+Why was the logic moved from one file to another in the project?,cb4c133f6ca6,datatalksclub/llm-zoomcamp,pull_request
+What changes were made to the README to align it with the shared structure for the project?,f4746403392f,datatalksclub/llm-zoomcamp,pull_request
+What clarifications were made to the beginner instructions for the second homework assignment?,8e8d5135874f,datatalksclub/llm-zoomcamp,pull_request
+How does this repository ensure that tool_calls are saved in a valid JSON format when writing to CSV?,9fbb1c91cd83,datatalksclub/llm-zoomcamp,pull_request
+What should users do to ensure resources are released after a container is no longer needed?,18a6a5f2f08f,datatalksclub/llm-zoomcamp,pull_request
+How can I run the sqlite ingest multiple times without creating duplicate records? ,10146bcb1efb,datatalksclub/llm-zoomcamp,pull_request
+What functionality does the TextLens API provide for sentiment analysis?,d443d6a9f3d0,datatalksclub/llm-zoomcamp,pull_request
+What change was made regarding the prerequisites for the Kestra/YAML module in the project?,ec4e9f832a09,datatalksclub/llm-zoomcamp,pull_request
+What was done to resolve the proxy issues encountered with the OpenAI API in the RAG application?,5cb2af86b8db,datatalksclub/llm-zoomcamp,pull_request
+How does the project configuration change affect the installation of PyTorch in order to manage CUDA dependencies?,d8ff2efb86e3,datatalksclub/llm-zoomcamp,pull_request
+What beginner clarifications were added for the second homework assignment?,b35a8c215e0b,datatalksclub/llm-zoomcamp,pull_request
+How can environment variables be loaded to prevent errors when creating an OpenAI client in the code?,34e52103bcc1,datatalksclub/llm-zoomcamp,pull_request
+What notes were added regarding the use of open and closed sourced models?,ce76c8ece5ba,datatalksclub/llm-zoomcamp,pull_request
+What comparisons are made regarding matrix-vector multiplication and loops in the lessons?,281d9594a97a,datatalksclub/llm-zoomcamp,comment
+What should I do if I want to add lesson content to the repository?,0c6d832d157d,datatalksclub/llm-zoomcamp,comment
+What are the steps to install Miniconda using a bash script?,d0fcca3935be,datatalksclub/llm-zoomcamp,comment
+What should I do if I mistakenly submit a merge request that conflicts with the current repository structure?,16d5579a67a1,datatalksclub/llm-zoomcamp,comment
+What is the purpose of the documentation related to overcoming infrastructure constraints during a large-scale RAG evaluation?,842b58f78182,datatalksclub/llm-zoomcamp,comment
+What should someone do if they want to add lesson content to the repository?,deee83408dfc,datatalksclub/llm-zoomcamp,comment
+How can I download the latest version of the software?,8760c900e859,datatalksclub/llm-zoomcamp,comment
+What happens when an error occurs during a request to the Elasticsearch client?,6cdbdbb1b0f1,datatalksclub/llm-zoomcamp,comment
+What suggestion is made to improve the submission process regarding including a Slack thread link?,ff5a9ecf9b25,datatalksclub/llm-zoomcamp,comment
+What topics related to embeddings and neural networks are already covered in the lessons?,e8aee7b09782,datatalksclub/llm-zoomcamp,comment
+What indicates that the indexing process finished successfully and the script can be run?,b983efff3491,datatalksclub/llm-zoomcamp,comment
+How can I manage notifications and review tasks using GitHub Mobile?,cbaafd27c9ea,datatalksclub/llm-zoomcamp,comment
+How does the modular approach in the RAG framework allow for swapping different components?,6c6c617c5be1,datatalksclub/llm-zoomcamp,doc
+How is the ground truth dataset for evaluating search generated?,93e2b0fbf386,datatalksclub/llm-zoomcamp,doc
+What data has already been created for the homework and how can it be accessed?,2519349e9be7,datatalksclub/llm-zoomcamp,doc
+How do I evaluate the relevance of a question and answer using the provided method?,b26f06ccf0fe,datatalksclub/llm-zoomcamp,doc
+What topics will be covered in the introduction module of the course?,e7503d1910e2,datatalksclub/llm-zoomcamp,doc
+How can I generate synthetic historical conversation data between specific start and end times?,961f6ea8a702,datatalksclub/llm-zoomcamp,doc
+What are the next steps after establishing a working retrieval-augmented generation flow?,215a87e4965e,datatalksclub/llm-zoomcamp,doc
+What additional library is required for the homework and how do I install it?,f220f62ab363,datatalksclub/llm-zoomcamp,doc
+How can I serve Hugging Face models in production without relying on their servers? ,7a6f50b96f09,datatalksclub/llm-zoomcamp,doc
+How does the RAG pipeline assist with frequently asked questions from course participants?,8a41e99b8dba,datatalksclub/llm-zoomcamp,doc
+How does the RAG assistant process user questions to retrieve answers from documents?,3c42c6cf9652,datatalksclub/llm-zoomcamp,doc
+How can I implement an input guardrail for an agent in a framework?,e30b5625c854,datatalksclub/llm-zoomcamp,doc

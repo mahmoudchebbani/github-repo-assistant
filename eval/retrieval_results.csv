@@ -1,0 +1,4 @@
+mode,hit_rate,mrr
+dense,0.78,0.5957
+lexical,0.04,0.04
+hybrid,0.78,0.5907
