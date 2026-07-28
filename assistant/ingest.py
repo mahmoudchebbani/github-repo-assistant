@@ -112,7 +112,7 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 @dlt.resource(name="docs", write_disposition="merge", primary_key=("repo", "path"))
 def docs(repo: str) -> Iterator[dict[str, Any]]:
     """Yield one commit's snapshot of every blob matching `DOCS_GLOBS`, decoded from base64."""
-    pattern = _glob_to_regex(get_settings().docs_globs)
+    patterns = [_glob_to_regex(glob) for glob in get_settings().docs_globs_list()]
     client = _client()
     branch = client.get(f"/repos/{repo}").json()["default_branch"]
     sha = client.get(f"/repos/{repo}/branches/{branch}").json()["commit"]["sha"]
@@ -120,7 +120,7 @@ def docs(repo: str) -> Iterator[dict[str, Any]]:
     # GitHub silently truncates very large trees; response["truncated"] is not checked here.
     for entry in response["tree"]:
         path = entry["path"]
-        if entry["type"] != "blob" or not pattern.match(path):
+        if entry["type"] != "blob" or not any(pattern.match(path) for pattern in patterns):
             continue
         if entry["size"] > MAX_DOC_BYTES:
             logger.warning(
