@@ -41,7 +41,7 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "Cumulative cost",
+      "title": "Cumulative cost (completed turns)",
       "description": "Sums cost_usd on completed turns only; calls from an interrupted run are never written and so are excluded",
       "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
       "datasource": { "type": "postgres", "uid": "assistant" },
