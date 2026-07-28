@@ -3,9 +3,13 @@
 import hashlib
 from typing import Literal
 
+from llama_index.core import Document
+from llama_index.core.node_parser import MarkdownNodeParser
 from pydantic import BaseModel
 
 from assistant.config import get_settings
+
+_MARKDOWN_PARSER = MarkdownNodeParser()
 
 PARAGRAPH_SEPARATOR = "\n\n"
 ID_HASH_LENGTH = 12
@@ -71,10 +75,25 @@ def build_chunk_id(record: RawRecord, ordinal: int) -> str:
     return hashlib.sha256(seed.encode()).hexdigest()[:ID_HASH_LENGTH]
 
 
+def chunk_markdown(text: str) -> list[str]:
+    """Split a markdown document into sections along its heading structure."""
+    nodes = _MARKDOWN_PARSER.get_nodes_from_documents([Document(text=text)])
+    return [node.get_content() for node in nodes if node.get_content().strip()]
+
+
 def chunk_record(record: RawRecord, repo: str) -> list[Chunk]:
     """Split one raw record into chunks; a title-only body still yields one chunk, not zero."""
     settings = get_settings()
-    texts = chunk_text(record.body, settings.chunk_chars, settings.chunk_overlap) or [""]
+    if record.source_type == "doc":
+        # A heading section can itself exceed the token window, so re-pack each one by size.
+        sections = chunk_markdown(record.body)
+        texts = [
+            piece
+            for section in sections
+            for piece in chunk_text(section, settings.chunk_chars, settings.chunk_overlap)
+        ] or [""]
+    else:
+        texts = chunk_text(record.body, settings.chunk_chars, settings.chunk_overlap) or [""]
     citation = build_citation(record, repo)
     return [
         Chunk(

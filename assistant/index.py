@@ -18,9 +18,27 @@ _ISSUES_QUERY = """
     WHERE repo = %s
 """
 
+_PULL_REQUESTS_QUERY = """
+    SELECT id, number, title, body, html_url
+    FROM raw.pull_requests
+    WHERE repo = %s
+"""
+
+_COMMENTS_QUERY = """
+    SELECT id, body, html_url, issue_url
+    FROM raw.comments
+    WHERE repo = %s
+"""
+
+_DOCS_QUERY = """
+    SELECT id, path, body, html_url
+    FROM raw.docs
+    WHERE repo = %s
+"""
+
 
 def read_raw_records(conn: psycopg.Connection, repo: str) -> Iterator[RawRecord]:
-    """Yield every ingested row for one repository as a normalised record."""
+    """Yield every ingested row for one repository, across all four source types."""
     for row_id, number, title, body, url in conn.execute(_ISSUES_QUERY, (repo,)):
         yield RawRecord(
             source_type="issue",
@@ -29,6 +47,35 @@ def read_raw_records(conn: psycopg.Connection, repo: str) -> Iterator[RawRecord]
             title=title,
             body=body or "",
             url=url,
+        )
+    for row_id, number, title, body, url in conn.execute(_PULL_REQUESTS_QUERY, (repo,)):
+        yield RawRecord(
+            source_type="pull_request",
+            source_id=str(row_id),
+            number=number,
+            title=title,
+            body=body or "",
+            url=url,
+        )
+    for row_id, body, url, issue_url in conn.execute(_COMMENTS_QUERY, (repo,)):
+        number = int(issue_url.rsplit("/", 1)[-1])
+        yield RawRecord(
+            source_type="comment",
+            source_id=str(row_id),
+            number=number,
+            title=f"Comment on #{number}",
+            body=body or "",
+            url=url,
+        )
+    for row_id, path, body, url in conn.execute(_DOCS_QUERY, (repo,)):
+        yield RawRecord(
+            source_type="doc",
+            source_id=str(row_id),
+            number=None,
+            title=path,
+            body=body or "",
+            url=url,
+            path=path,
         )
 
 
