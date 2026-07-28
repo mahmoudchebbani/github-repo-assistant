@@ -44,8 +44,7 @@ def test_a_question_of_only_stopwords_retrieves_nothing_lexically(populated):
     assert search_lexical(populated, "what is the it of a to", k=3) == []
 
 
-# Repo filtering is new SQL predicate logic with no other coverage; a silent bug here would leak
-# one repo's chunks into another's results without raising, so it earns the one extra test allowed.
+# A silent bug here leaks one repo's chunks into another's results without ever raising.
 def test_repo_filter_keeps_a_matching_chunk_from_another_repo_out_of_scope(populated):
     text = "Windows runners intermittently fail with ETIMEDOUT."
     vector = embed_texts([text])[0]
