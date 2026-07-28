@@ -17,6 +17,18 @@ services:
       timeout: 3s
       retries: 5
 
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file: .env
+    environment:
+      # Overrides the .env value, which names the host's published port rather than this network.
+      DATABASE_URL: postgresql://assistant:assistant@postgres:5432/assistant
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   grafana:
     image: grafana/grafana:11.3.0
     ports:
