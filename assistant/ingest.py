@@ -1,8 +1,8 @@
 """dlt pipeline pulling a repo's issues, pull requests, comments and docs into the raw schema."""
 
 import base64
-import fnmatch
 import logging
+import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -82,21 +82,38 @@ def comments(repo: str) -> Iterator[dict[str, Any]]:
             }
 
 
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """Translate a `**`/`*`/`?` glob to a regex; `**/` matches zero or more whole path segments."""
+    regex = ""
+    i = 0
+    while i < len(pattern):
+        if pattern[i : i + 3] == "**/":
+            regex += "(?:[^/]*/)*"
+            i += 3
+        elif pattern[i] == "*":
+            regex += "[^/]*"
+            i += 1
+        elif pattern[i] == "?":
+            regex += "[^/]"
+            i += 1
+        else:
+            regex += re.escape(pattern[i])
+            i += 1
+    return re.compile(f"^{regex}$")
+
+
 @dlt.resource(name="docs", write_disposition="replace")
 def docs(repo: str) -> Iterator[dict[str, Any]]:
     """Yield one commit's snapshot of every blob matching `DOCS_GLOBS`, decoded from base64."""
-    pattern = get_settings().docs_globs
+    pattern = _glob_to_regex(get_settings().docs_globs)
     client = _client()
     branch = client.get(f"/repos/{repo}").json()["default_branch"]
     sha = client.get(f"/repos/{repo}/branches/{branch}").json()["commit"]["sha"]
-    tree = client.get(f"/repos/{repo}/git/trees/{sha}", params={"recursive": 1}).json()["tree"]
-    for entry in tree:
+    response = client.get(f"/repos/{repo}/git/trees/{sha}", params={"recursive": 1}).json()
+    # GitHub silently truncates very large trees; response["truncated"] is not checked here.
+    for entry in response["tree"]:
         path = entry["path"]
-        # fnmatch has no "**" semantics, so also try without the "**/" prefix to catch root files.
-        matches = fnmatch.fnmatch(path, pattern) or (
-            pattern.startswith("**/") and fnmatch.fnmatch(path, pattern[3:])
-        )
-        if entry["type"] != "blob" or not matches:
+        if entry["type"] != "blob" or not pattern.match(path):
             continue
         if entry["size"] > MAX_DOC_BYTES:
             logger.warning(

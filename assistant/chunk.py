@@ -71,7 +71,9 @@ def build_citation(record: RawRecord, repo: str) -> str:
 
 def build_chunk_id(record: RawRecord, ordinal: int) -> str:
     """Return a stable id for one chunk of one source record."""
-    seed = f"{record.source_type}:{record.source_id}:{ordinal}"
+    # A doc's source_id is a content-addressed git blob SHA; identical files collide, so use path.
+    key = record.path if record.source_type == "doc" else record.source_id
+    seed = f"{record.source_type}:{key}:{ordinal}"
     return hashlib.sha256(seed.encode()).hexdigest()[:ID_HASH_LENGTH]
 
 
