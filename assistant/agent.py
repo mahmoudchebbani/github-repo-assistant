@@ -48,11 +48,18 @@ class LLMCall(BaseModel):
     latency_ms: int
 
 
+class Citation(BaseModel):
+    """One source the answer may cite: the label written in the text, and where it points."""
+
+    label: str
+    url: str
+
+
 class AnswerResult(BaseModel):
     """Everything one answered question produced."""
 
     text: str
-    citations: list[str]
+    citations: list[Citation]
     attempts: int
     calls: list[LLMCall]
 
@@ -85,12 +92,15 @@ def _invoke(node: str, prompt: str) -> tuple[str, LLMCall]:
     started = time.monotonic()
     response = _model().invoke(prompt)
     elapsed_ms = int((time.monotonic() - started) * 1000)
-    usage = response.usage_metadata or {}
+    usage = response.usage_metadata
+    if usage is None:
+        # Recorded as zero tokens this would cost zero, which no real call does; do not invent one.
+        raise RuntimeError(f"{node}: the model returned no token usage, so it cannot be costed")
     call = LLMCall(
         node=node,
         model=settings.openai_model,
-        prompt_tokens=usage.get("input_tokens", 0),
-        completion_tokens=usage.get("output_tokens", 0),
+        prompt_tokens=usage["input_tokens"],
+        completion_tokens=usage["output_tokens"],
         latency_ms=elapsed_ms,
     )
     return str(response.content), call
@@ -207,10 +217,13 @@ def answer(
     limit = SUPERSTEPS_PER_ATTEMPT * (settings.max_retries + 1) + SUPERSTEPS_TO_FINISH
     final = GRAPH.invoke(start, {"recursion_limit": limit})
     text = final["answer"]
-    # A refusal cites nothing; otherwise list retrieved sources once each, in retrieval order.
-    retrieved = dict.fromkeys(hit.citation for hit in final["hits"])
     # Substring, not equality: an exhausted loop generates from rejected context, so it paraphrases.
-    citations = [] if REFUSAL in text else list(retrieved)
+    cited = [] if REFUSAL in text else final["hits"]
+    urls: dict[str, str] = {}
+    for hit in cited:
+        # An issue and its comments share a citation but not a url, so the best-ranked hit wins.
+        urls.setdefault(hit.citation, hit.url)
+    citations = [Citation(label=label, url=url) for label, url in urls.items()]
     return AnswerResult(
         text=text, citations=citations, attempts=final["attempts"], calls=final["calls"]
     )

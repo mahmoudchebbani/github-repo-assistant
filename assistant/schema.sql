@@ -17,13 +17,17 @@ CREATE INDEX IF NOT EXISTS chunks_lexemes_idx   ON chunks USING gin (lexemes);
 
 CREATE TABLE IF NOT EXISTS conversations (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    repo            TEXT NOT NULL,
+    -- NULL means the question was asked across every repository, which no slug can claim.
+    repo            TEXT,
     question        TEXT NOT NULL,
     answer          TEXT NOT NULL,
     retrieval_mode  TEXT NOT NULL,
     attempts        INTEGER NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Databases created before the all-repositories option still have the old NOT NULL; drop it.
+ALTER TABLE conversations ALTER COLUMN repo DROP NOT NULL;
 
 CREATE TABLE IF NOT EXISTS llm_calls (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
