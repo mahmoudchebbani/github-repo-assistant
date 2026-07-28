@@ -1,0 +1,92 @@
+{
+  "title": "github-repo-assistant",
+  "uid": "assistant",
+  "editable": true,
+  "schemaVersion": 39,
+  "time": { "from": "now-7d", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Questions per day",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "assistant" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('day', created_at) AS time, count(*) FROM conversations GROUP BY 1 ORDER BY 1",
+          "datasource": { "type": "postgres", "uid": "assistant" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "LLM call latency p50 / p95",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "assistant" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('hour', created_at) AS time, percentile_cont(0.5) WITHIN GROUP (ORDER BY latency_ms) AS p50, percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95 FROM llm_calls GROUP BY 1 ORDER BY 1",
+          "datasource": { "type": "postgres", "uid": "assistant" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Cumulative cost",
+      "description": "Sums cost_usd on completed turns only; calls from an interrupted run are never written and so are excluded",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "assistant" },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 6 }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT created_at AS time, sum(cost_usd) OVER (ORDER BY created_at) AS cumulative_cost FROM llm_calls ORDER BY created_at",
+          "datasource": { "type": "postgres", "uid": "assistant" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "piechart",
+      "title": "Feedback ratio",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "assistant" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT vote, count(*) FROM feedback GROUP BY vote",
+          "datasource": { "type": "postgres", "uid": "assistant" }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "barchart",
+      "title": "Attempts distribution",
+      "description": "The retry loop never runs under lexical retrieval mode, so a flat count at 1 there reflects that mode, not a broken loop",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "assistant" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT attempts, count(*) FROM conversations GROUP BY 1 ORDER BY 1",
+          "datasource": { "type": "postgres", "uid": "assistant" }
+        }
+      ]
+    }
+  ]
+}

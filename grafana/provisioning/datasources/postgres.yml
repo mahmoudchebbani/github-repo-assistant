@@ -1,0 +1,13 @@
+apiVersion: 1
+datasources:
+  - name: assistant
+    uid: assistant
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: assistant
+    user: assistant
+    secureJsonData:
+      password: assistant
+    jsonData:
+      sslmode: disable
