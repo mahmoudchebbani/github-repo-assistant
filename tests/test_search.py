@@ -24,7 +24,7 @@ def populated(conn):
     return conn
 
 
-def test_dense_search_finds_a_paraphrase_with_no_shared_words(populated):
+def test_dense_search_finds_a_paraphrase_that_lexical_search_would_miss(populated):
     hits = search_dense(populated, "why did they move to a non-blocking client", k=3)
     assert hits[0].id == "d1"
 

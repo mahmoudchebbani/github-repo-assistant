@@ -2,20 +2,25 @@
 
 import psycopg
 from pgvector import Vector
+from psycopg.rows import class_row
 from pydantic import BaseModel
 
+from assistant.config import RetrievalMode
 from assistant.db import get_connection
 from assistant.embed import embed_query
 
-_DENSE_QUERY = """
-    SELECT id, citation, title, url, text
+# The one definition of which columns become a Hit; both queries below interpolate it.
+_COLUMNS = "id, citation, title, url, text"
+
+_DENSE_QUERY = f"""
+    SELECT {_COLUMNS}
     FROM chunks
     ORDER BY embedding <=> %s
     LIMIT %s
 """
 
-_LEXICAL_QUERY = """
-    SELECT id, citation, title, url, text
+_LEXICAL_QUERY = f"""
+    SELECT {_COLUMNS}
     FROM chunks
     WHERE lexemes @@ websearch_to_tsquery('english', %s)
     ORDER BY ts_rank_cd(lexemes, websearch_to_tsquery('english', %s)) DESC
@@ -37,16 +42,20 @@ class Hit(BaseModel):
     text: str
 
 
+# Builds a Hit from the query's actual result columns by name, so column order cannot mis-map fields.
+_as_hit = class_row(Hit)
+
+
 def search_dense(conn: psycopg.Connection, query: str, k: int) -> list[Hit]:
     """Return the k nearest chunks by cosine distance."""
-    rows = conn.execute(_DENSE_QUERY, (Vector(embed_query(query)), k)).fetchall()
-    return [Hit(id=r[0], citation=r[1], title=r[2], url=r[3], text=r[4]) for r in rows]
+    cur = conn.cursor(row_factory=_as_hit)
+    return cur.execute(_DENSE_QUERY, (Vector(embed_query(query)), k)).fetchall()
 
 
 def search_lexical(conn: psycopg.Connection, query: str, k: int) -> list[Hit]:
     """Return the k best chunks by Postgres full-text ranking."""
-    rows = conn.execute(_LEXICAL_QUERY, (query, query, k)).fetchall()
-    return [Hit(id=r[0], citation=r[1], title=r[2], url=r[3], text=r[4]) for r in rows]
+    cur = conn.cursor(row_factory=_as_hit)
+    return cur.execute(_LEXICAL_QUERY, (query, query, k)).fetchall()
 
 
 def reciprocal_rank_fusion(rankings: list[list[str]], k: int = RRF_K) -> list[str]:
@@ -58,7 +67,7 @@ def reciprocal_rank_fusion(rankings: list[list[str]], k: int = RRF_K) -> list[st
     return sorted(scores, key=lambda identifier: -scores[identifier])
 
 
-def retrieve(query: str, mode: str, top_k: int) -> list[Hit]:
+def retrieve(query: str, mode: RetrievalMode, top_k: int) -> list[Hit]:
     """Retrieve chunks by dense, lexical, or RRF-fused hybrid search."""
     with get_connection() as conn:
         if mode == "dense":
@@ -66,7 +75,7 @@ def retrieve(query: str, mode: str, top_k: int) -> list[Hit]:
         if mode == "lexical":
             return search_lexical(conn, query, top_k)
         if mode != "hybrid":
-            # Settings.retrieval_mode is a Literal, so this only fires when a caller bypasses it.
+            # mode is typed as RetrievalMode; this only fires when a caller passes a raw str anyway.
             raise ValueError(f"unrecognised retrieval mode: {mode!r}")
 
         pool = top_k * POOL_MULTIPLIER

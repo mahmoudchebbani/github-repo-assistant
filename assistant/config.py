@@ -8,6 +8,9 @@ from typing import Literal
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Shared with assistant.search.retrieve so the two cannot enumerate the modes differently.
+RetrievalMode = Literal["dense", "lexical", "hybrid"]
+
 
 class Settings(BaseSettings):
     """Every value the application needs. Required fields have no defaults."""
@@ -26,7 +29,7 @@ class Settings(BaseSettings):
     embedding_model: str
     chunk_chars: int
     chunk_overlap: int
-    retrieval_mode: Literal["dense", "lexical", "hybrid"]
+    retrieval_mode: RetrievalMode
     answer_prompt: Literal["A", "B"]
     top_k: int
     max_retries: int
