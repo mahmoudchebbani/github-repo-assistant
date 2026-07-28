@@ -40,21 +40,12 @@ class Chunk(BaseModel):
 
 
 def chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    """Pack paragraphs greedily into spans of at most `size` characters."""
+    """Pack paragraphs greedily, in source order, into spans of at most `size` characters."""
     chunks: list[str] = []
     current = ""
     for paragraph in text.split(PARAGRAPH_SEPARATOR):
-        while len(paragraph) > size:
-            chunks.append(paragraph[:size])
-            paragraph = paragraph[size - overlap :]
-        candidate = f"{current}{PARAGRAPH_SEPARATOR}{paragraph}" if current else paragraph
-        if len(candidate) <= size:
-            current = candidate
-            continue
-        if current:
-            chunks.append(current)
-        current = f"{current[-overlap:]}{paragraph}" if current else paragraph
-        if len(current) > size:
+        current = f"{current}{PARAGRAPH_SEPARATOR}{paragraph}" if current else paragraph
+        while len(current) > size:
             chunks.append(current[:size])
             current = current[size - overlap :]
     if current:
