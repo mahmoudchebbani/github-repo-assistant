@@ -51,10 +51,13 @@ def issues(repo: str) -> Iterator[dict[str, Any]]:
 
 @dlt.resource(name="pull_requests", write_disposition="merge", primary_key="id")
 def pull_requests(repo: str) -> Iterator[dict[str, Any]]:
-    """Yield one repo's pull requests, open and closed."""
-    params = {"state": "all", "per_page": PER_PAGE}
+    """Yield PRs since `ingest_since`; `/pulls` has no `since` param, so sort by update and stop early."""
+    since = get_settings().ingest_since.isoformat()
+    params = {"state": "all", "per_page": PER_PAGE, "sort": "updated", "direction": "desc"}
     for page in _client().paginate(f"/repos/{repo}/pulls", params=params):
         for row in page:
+            if row["updated_at"] < since:
+                return
             yield {
                 "id": row["id"],
                 "number": row["number"],
@@ -68,8 +71,8 @@ def pull_requests(repo: str) -> Iterator[dict[str, Any]]:
 
 @dlt.resource(name="comments", write_disposition="merge", primary_key="id")
 def comments(repo: str) -> Iterator[dict[str, Any]]:
-    """Yield one repo's issue and PR comments, each carrying the thread's `issue_url`."""
-    params = {"per_page": PER_PAGE}
+    """Yield comments since `ingest_since`, each carrying the thread's `issue_url`."""
+    params = {"per_page": PER_PAGE, "since": get_settings().ingest_since.isoformat()}
     for page in _client().paginate(f"/repos/{repo}/issues/comments", params=params):
         for row in page:
             yield {

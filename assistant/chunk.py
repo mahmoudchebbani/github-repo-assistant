@@ -40,11 +40,18 @@ class Chunk(BaseModel):
 
 
 def chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    """Pack paragraphs greedily, in source order, into spans of at most `size` characters."""
+    """Pack paragraphs greedily, in source order, preferring a paragraph boundary as the seam."""
     chunks: list[str] = []
     current = ""
     for paragraph in text.split(PARAGRAPH_SEPARATOR):
-        current = f"{current}{PARAGRAPH_SEPARATOR}{paragraph}" if current else paragraph
+        candidate = f"{current}{PARAGRAPH_SEPARATOR}{paragraph}" if current else paragraph
+        if current and len(candidate) > size:
+            chunks.append(current)
+            # Unclamped, len(current) - overlap goes negative and wraps to a too-short tail.
+            tail = current[max(0, len(current) - overlap) :]
+            current = f"{tail}{PARAGRAPH_SEPARATOR}{paragraph}" if tail else paragraph
+        else:
+            current = candidate
         while len(current) > size:
             chunks.append(current[:size])
             current = current[size - overlap :]
