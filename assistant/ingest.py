@@ -12,12 +12,7 @@ PER_PAGE = 100
 
 
 def _client() -> RESTClient:
-    """A GitHub REST client authenticated with the configured token.
-
-    The paginator is declared explicitly: dlt auto-detects one from the first response and
-    silently falls back to a single page when detection scores zero, which would drop every
-    row past page 1 with no error raised.
-    """
+    """A GitHub client; paginator is explicit — dlt auto-detect can silently drop pages past 1."""
     return RESTClient(
         base_url=GITHUB_API,
         auth=BearerTokenAuth(token=get_settings().github_token),
@@ -27,11 +22,7 @@ def _client() -> RESTClient:
 
 @dlt.resource(name="issues", write_disposition="merge", primary_key="id")
 def issues(repo: str):
-    """Yield one repository's issues since `ingest_since`, excluding pull requests.
-
-    GitHub's `/issues` endpoint also returns pull requests, marked by a `pull_request` key;
-    those are filtered out here or every PR would be ingested twice under two source types.
-    """
+    """Yield one repo's issues since `ingest_since`; PRs (marked `pull_request`) are filtered."""
     settings = get_settings()
     params = {"state": "all", "per_page": PER_PAGE, "since": settings.ingest_since.isoformat()}
     for page in _client().paginate(f"/repos/{repo}/issues", params=params):
@@ -50,13 +41,7 @@ def issues(repo: str):
 
 
 def run_ingestion(repo: str) -> None:
-    """Load one repository's issues into `raw.issues`, tagging rows with the lower-cased slug.
-
-    dlt's postgres destination does not read `DATABASE_URL`: by default it resolves its own
-    credentials from `DESTINATION__POSTGRES__CREDENTIALS`, an env var our own `.env` loader
-    (pydantic-settings) never exports into `os.environ`. Passing the connection string straight
-    from `get_settings()` here avoids that mismatch and a second copy of the secret in `.env`.
-    """
+    """Load one repo's issues into `raw.issues`; passes the DSN since dlt ignores our .env."""
     pipeline = dlt.pipeline(
         pipeline_name="github_repo_assistant",
         destination=dlt.destinations.postgres(credentials=get_settings().database_url),

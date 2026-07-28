@@ -20,4 +20,5 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 
 def embed_query(text: str) -> list[float]:
     """Embed a single query with the same model as the corpus."""
+    # No bge query instruction: fastembed applies none; retrieval eval measures whether it matters.
     return embed_texts([text])[0]

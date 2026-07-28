@@ -42,6 +42,9 @@ The day a second implementation genuinely exists is the day to introduce the sea
   have to.
 - **Comments explain why, never what.** A comment restating the line is noise. A comment explaining a
   non-obvious constant, a silent failure mode, or a decision is worth its space.
+- **One line.** A comment that needs a paragraph is a comment that has stopped earning its space —
+  say the why in a sentence or delete it. Docstrings are one line too, as above. If the reasoning
+  genuinely cannot compress, it is design rationale and belongs in the README, not the source.
 
 ## Correctness
 

@@ -52,9 +52,7 @@ def reindex() -> int:
     settings = get_settings()
     repo = settings.repo.lower()
 
-    # get_connection() calls register_vector, which raises ProgrammingError until
-    # `vector` is in the catalogue. Bootstrap the schema with a plain connection first,
-    # then switch to the pgvector-registered one for the real work.
+    # get_connection() raises on a cold DB; bootstrap the schema with a plain connection first.
     with psycopg.connect(settings.database_url) as bootstrap:
         init_db(bootstrap)
 
