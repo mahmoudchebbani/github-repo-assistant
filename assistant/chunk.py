@@ -67,11 +67,12 @@ def build_citation(record: RawRecord, repo: str) -> str:
     return f"{repo}#{record.number}"
 
 
-def build_chunk_id(record: RawRecord, ordinal: int) -> str:
-    """Return a stable id for one chunk of one source record."""
+def build_chunk_id(record: RawRecord, ordinal: int, repo: str) -> str:
+    """Return a stable id for one chunk of one source record, unique across repos too."""
     # A doc's source_id is a content-addressed git blob SHA; identical files collide, so use path.
+    # repo is in the seed because two repos can share a doc path (e.g. every repo has a README.md).
     key = record.path if record.source_type == "doc" else record.source_id
-    seed = f"{record.source_type}:{key}:{ordinal}"
+    seed = f"{repo}:{record.source_type}:{key}:{ordinal}"
     return hashlib.sha256(seed.encode()).hexdigest()[:ID_HASH_LENGTH]
 
 
@@ -97,7 +98,7 @@ def chunk_record(record: RawRecord, repo: str) -> list[Chunk]:
     citation = build_citation(record, repo)
     return [
         Chunk(
-            id=build_chunk_id(record, ordinal),
+            id=build_chunk_id(record, ordinal, repo),
             repo=repo,
             source_type=record.source_type,
             title=record.title,

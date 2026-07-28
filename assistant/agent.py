@@ -34,10 +34,10 @@ def _format_context(hits: list[Hit]) -> str:
     return "\n\n".join(f"[{hit.citation}] {hit.text}" for hit in hits)
 
 
-def answer(question: str) -> AnswerResult:
-    """Retrieve context and generate a cited answer."""
+def answer(question: str, repo: str | None = None) -> AnswerResult:
+    """Retrieve context and generate a cited answer; repo=None searches every configured repo."""
     settings = get_settings()
-    hits = retrieve(question, settings.retrieval_mode, settings.top_k)
+    hits = retrieve(question, settings.retrieval_mode, settings.top_k, repo)
     if not hits:
         return AnswerResult(text=REFUSAL, citations=[], attempts=1, calls=[])
 

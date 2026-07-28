@@ -35,3 +35,6 @@ packages = ["assistant"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E501"]

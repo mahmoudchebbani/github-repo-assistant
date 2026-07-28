@@ -51,7 +51,7 @@ def issues(repo: str) -> Iterator[dict[str, Any]]:
 
 @dlt.resource(name="pull_requests", write_disposition="merge", primary_key="id")
 def pull_requests(repo: str) -> Iterator[dict[str, Any]]:
-    """Yield PRs since `ingest_since`; `/pulls` has no `since` param, so sort by update and stop early."""
+    """Yield PRs since `ingest_since`; `/pulls` has no `since` param, so stop early once past it."""
     since = get_settings().ingest_since.isoformat()
     params = {"state": "all", "per_page": PER_PAGE, "sort": "updated", "direction": "desc"}
     for page in _client().paginate(f"/repos/{repo}/pulls", params=params):
@@ -86,7 +86,7 @@ def comments(repo: str) -> Iterator[dict[str, Any]]:
 
 
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """Glob to regex: `**` matches any depth anywhere in the pattern, `*` matches one segment."""
+    """Glob to regex: `**/` and a trailing `**` match any depth; elsewhere `*` is one segment."""
     regex = ""
     i = 0
     n = len(pattern)
@@ -160,4 +160,5 @@ def run_ingestion(repo: str) -> None:
 
 
 if __name__ == "__main__":
-    run_ingestion(get_settings().repo)
+    for repo in get_settings().repo_list():
+        run_ingestion(repo)

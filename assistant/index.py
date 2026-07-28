@@ -94,10 +94,10 @@ def _write(conn: psycopg.Connection, chunks: list[Chunk]) -> None:
     )
 
 
-def reindex() -> int:
-    """Rebuild the chunks table from raw. Returns the number of chunks written."""
+def reindex(repo: str) -> int:
+    """Rebuild one repo's chunks from raw, leaving other repos alone. Returns the count written."""
     settings = get_settings()
-    repo = settings.repo.lower()
+    repo = repo.lower()
 
     # get_connection() raises on a cold DB; bootstrap the schema with a plain connection first.
     with psycopg.connect(settings.database_url) as bootstrap:
@@ -105,7 +105,8 @@ def reindex() -> int:
 
     written = 0
     with get_connection() as conn, conn.transaction():
-        conn.execute("TRUNCATE chunks")
+        # Scoped to this repo, not TRUNCATE, so a concurrent reindex of another repo is unaffected.
+        conn.execute("DELETE FROM chunks WHERE repo = %s", (repo,))
         batch: list[Chunk] = []
         for record in read_raw_records(conn, repo):
             batch.extend(chunk_record(record, repo))
@@ -121,4 +122,5 @@ def reindex() -> int:
 
 
 if __name__ == "__main__":
-    reindex()
+    for repo in get_settings().repo_list():
+        reindex(repo)

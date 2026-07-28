@@ -32,3 +32,21 @@ def test_dense_search_finds_a_paraphrase_that_lexical_search_would_miss(populate
 def test_lexical_search_finds_an_exact_token_dense_search_would_blur(populated):
     hits = search_lexical(populated, "ETIMEDOUT", k=3)
     assert [hit.id for hit in hits] == ["d2"]
+
+
+# Repo filtering is new SQL predicate logic with no other coverage; a silent bug here would leak
+# one repo's chunks into another's results without raising, so it earns the one extra test allowed.
+def test_repo_filter_keeps_a_matching_chunk_from_another_repo_out_of_scope(populated):
+    text = "Windows runners intermittently fail with ETIMEDOUT."
+    vector = embed_texts([text])[0]
+    populated.execute(
+        "INSERT INTO chunks (id, repo, source_type, title, url, citation, text, embedding)"
+        " VALUES ('d4', 'other/repo', 'issue', 'Flaky CI', 'http://x', 'other/repo#1', %s, %s)",
+        (text, Vector(vector)),
+    )
+    populated.commit()
+
+    dense_hits = search_dense(populated, "ETIMEDOUT", k=5, repo="acme/repo")
+    lexical_hits = search_lexical(populated, "ETIMEDOUT", k=5, repo="acme/repo")
+    assert all(hit.id != "d4" for hit in dense_hits)
+    assert [hit.id for hit in lexical_hits] == ["d2"]
