@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from assistant.config import get_settings
 from assistant.prompts import (
-    ANSWER_A,
+    ANSWER_PROMPTS,
     FEEDBACK,
     GRADE,
     GRADE_YES,
@@ -167,7 +167,8 @@ def generate(state: State) -> State:
         # A generation call with no context can only invent or refuse, so refuse without paying.
         return {**state, "answer": REFUSAL}
     # The query, not the question: a follow-up's pronoun has no referent without prior answer text.
-    prompt = ANSWER_A.format(question=state["query"], context=_format_context(state["hits"]))
+    template = ANSWER_PROMPTS[get_settings().answer_prompt]
+    prompt = template.format(question=state["query"], context=_format_context(state["hits"]))
     text, call = _invoke(GENERATE_NODE, prompt)
     return {**state, "answer": text, "calls": [*state["calls"], call]}
 
