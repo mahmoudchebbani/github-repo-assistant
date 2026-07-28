@@ -13,7 +13,7 @@ from assistant.config import get_settings
 from assistant.db import cost_usd
 from assistant.prompts import ANSWER_PROMPTS, JUDGE
 from assistant.search import retrieve
-from eval.env_file import ENV_FILES, write_setting
+from eval.env_file import ENV_FILES, check_settable, write_setting
 from eval.ground_truth import GROUND_TRUTH_CSV, SOURCE_TYPES
 
 RESULTS_CSV = Path(__file__).parent / "llm_results.csv"
@@ -90,6 +90,8 @@ def save_chart(summary: pd.DataFrame) -> None:
 
 def main() -> None:
     """Judge both prompts on one shared context per question, chart it, and ship the winner."""
+    # Before the paid calls, not after them: this run costs money it could not otherwise act on.
+    check_settable(_PROMPT_KEY)
     settings = get_settings()
     # dtype=str: an all-digit chunk id would otherwise be read as an int and match nothing.
     truth = pd.read_csv(GROUND_TRUTH_CSV, dtype=str)

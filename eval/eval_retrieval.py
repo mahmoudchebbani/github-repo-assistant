@@ -6,7 +6,7 @@ import pandas as pd
 
 from assistant.config import RetrievalMode, get_settings
 from assistant.search import retrieve
-from eval.env_file import ENV_FILES, write_setting
+from eval.env_file import ENV_FILES, check_settable, write_setting
 from eval.ground_truth import GROUND_TRUTH_CSV
 
 RESULTS_CSV = Path(__file__).parent / "retrieval_results.csv"
@@ -54,6 +54,8 @@ def save_chart(scores: pd.DataFrame, top_k: int) -> None:
 
 def main() -> None:
     """Score every mode on the ground truth, chart it, and write the winner into both env files."""
+    # Before the 150 retrievals, not after them: this run could not otherwise act on its result.
+    check_settable(_MODE_KEY)
     # dtype=str: an all-digit chunk id would otherwise be read as an int and match nothing.
     truth = pd.read_csv(GROUND_TRUTH_CSV, dtype=str)
     questions = truth["question"].tolist()

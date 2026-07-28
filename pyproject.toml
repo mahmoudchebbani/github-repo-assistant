@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "github-repo-assistant"
 version = "0.1.0"
-description = "Add your description here"
+description = "Agentic RAG assistant over a GitHub repository's issues, pull requests and docs"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
