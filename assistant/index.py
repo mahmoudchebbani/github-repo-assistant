@@ -79,9 +79,11 @@ def read_raw_records(conn: psycopg.Connection, repo: str) -> Iterator[RawRecord]
         )
 
 
-def _write(conn: psycopg.Connection, chunks: list[Chunk]) -> None:
+def _write(conn: psycopg.Connection, chunks: list[Chunk]) -> int:
+    """Embed and insert one batch, returning how many rows the database actually took."""
     vectors = embed_texts([chunk.text for chunk in chunks])
-    conn.cursor().executemany(
+    cursor = conn.cursor()
+    cursor.executemany(
         """
         INSERT INTO chunks (id, repo, source_type, title, url, citation, text, embedding)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -92,6 +94,8 @@ def _write(conn: psycopg.Connection, chunks: list[Chunk]) -> None:
             for c, v in zip(chunks, vectors)
         ],
     )
+    # rowcount, not len(chunks): a chunk ON CONFLICT dropped was never indexed and must not count.
+    return cursor.rowcount
 
 
 def reindex(repo: str) -> int:
@@ -111,12 +115,10 @@ def reindex(repo: str) -> int:
         for record in read_raw_records(conn, repo):
             batch.extend(chunk_record(record, repo))
             if len(batch) >= BATCH_SIZE:
-                _write(conn, batch)
-                written += len(batch)
+                written += _write(conn, batch)
                 batch = []
         if batch:
-            _write(conn, batch)
-            written += len(batch)
+            written += _write(conn, batch)
     print(f"indexed {written} chunks for {repo}")
     return written
 
