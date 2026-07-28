@@ -27,19 +27,22 @@ _DENSE_QUERY_FOR_REPO = f"""
     LIMIT %s
 """
 
+# websearch_to_tsquery ANDs every term, which matched 47 of 50 evaluation questions nowhere.
+_ANY_LEXEME = "array_to_string(tsvector_to_array(to_tsvector('english', %s)), ' | ')::tsquery"
+
 _LEXICAL_QUERY = f"""
     SELECT {_COLUMNS}
     FROM chunks
-    WHERE lexemes @@ websearch_to_tsquery('english', %s)
-    ORDER BY ts_rank_cd(lexemes, websearch_to_tsquery('english', %s)) DESC
+    WHERE lexemes @@ {_ANY_LEXEME}
+    ORDER BY ts_rank_cd(lexemes, {_ANY_LEXEME}) DESC
     LIMIT %s
 """
 
 _LEXICAL_QUERY_FOR_REPO = f"""
     SELECT {_COLUMNS}
     FROM chunks
-    WHERE repo = %s AND lexemes @@ websearch_to_tsquery('english', %s)
-    ORDER BY ts_rank_cd(lexemes, websearch_to_tsquery('english', %s)) DESC
+    WHERE repo = %s AND lexemes @@ {_ANY_LEXEME}
+    ORDER BY ts_rank_cd(lexemes, {_ANY_LEXEME}) DESC
     LIMIT %s
 """
 
@@ -80,7 +83,8 @@ def search_dense(
 def search_lexical(
     conn: psycopg.Connection, query: str, k: int, repo: str | None = None
 ) -> list[Hit]:
-    """Return the k best chunks by full-text ranking, within `repo` or across all if None."""
+    """Return the k chunks sharing most lexemes with the query, within `repo` or all if None."""
+    # A stopword-only question lemmatises to nothing, and the empty tsquery matches no rows.
     cur = conn.cursor(row_factory=_as_hit)
     if repo is None:
         return cur.execute(_LEXICAL_QUERY, (query, query, k)).fetchall()

@@ -34,6 +34,16 @@ def test_lexical_search_finds_an_exact_token_dense_search_would_blur(populated):
     assert [hit.id for hit in hits] == ["d2"]
 
 
+# Requiring every term matched 47 of 50 evaluation questions nowhere, which made hybrid decorative.
+def test_lexical_search_ranks_on_overlap_rather_than_demanding_every_term(populated):
+    hits = search_lexical(populated, "why do the Windows runners keep failing", k=3)
+    assert hits[0].id == "d2"
+
+
+def test_a_question_of_only_stopwords_retrieves_nothing_lexically(populated):
+    assert search_lexical(populated, "what is the it of a to", k=3) == []
+
+
 # Repo filtering is new SQL predicate logic with no other coverage; a silent bug here would leak
 # one repo's chunks into another's results without raising, so it earns the one extra test allowed.
 def test_repo_filter_keeps_a_matching_chunk_from_another_repo_out_of_scope(populated):
