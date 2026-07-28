@@ -1,6 +1,7 @@
 """The agent graph: rewrite, retrieve, grade, then answer from the chunks or refuse."""
 
 import time
+from functools import lru_cache
 from typing import TypedDict
 
 from langchain_openai import ChatOpenAI
@@ -8,7 +9,16 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
 from assistant.config import get_settings
-from assistant.prompts import ANSWER_A, FEEDBACK, GRADE, HISTORY, HISTORY_TURN, REFUSAL, REWRITE
+from assistant.prompts import (
+    ANSWER_A,
+    FEEDBACK,
+    GRADE,
+    GRADE_YES,
+    HISTORY,
+    HISTORY_TURN,
+    REFUSAL,
+    REWRITE,
+)
 from assistant.search import Hit, retrieve
 
 # One past exchange: what the user asked, and what the assistant answered.
@@ -62,12 +72,18 @@ class State(TypedDict):
     calls: list[LLMCall]
 
 
+@lru_cache
+def _model() -> ChatOpenAI:
+    """Return the process-wide chat client, built on first use so importing needs no key."""
+    settings = get_settings()
+    return ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
+
+
 def _invoke(node: str, prompt: str) -> tuple[str, LLMCall]:
     """Call the model once and record what it cost; the only network edge in the graph."""
     settings = get_settings()
-    llm = ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
     started = time.monotonic()
-    response = llm.invoke(prompt)
+    response = _model().invoke(prompt)
     elapsed_ms = int((time.monotonic() - started) * 1000)
     usage = response.usage_metadata or {}
     call = LLMCall(
@@ -100,8 +116,8 @@ def _format_feedback(query: str, reason: str) -> str:
 
 def rewrite(state: State) -> State:
     """Turn the question into a standalone search query, resolving what earlier turns implied."""
-    if not state["history"] and not state["feedback"]:
-        # Nothing refers back and nothing has failed yet, so the user's own words are the query.
+    if not state["history"] and state["attempts"] == 0:
+        # Nothing refers back and nothing has been searched, so the user's own words are the query.
         return {**state, "query": state["question"]}
     prompt = REWRITE.format(
         question=state["question"],
@@ -121,14 +137,15 @@ def retrieve_node(state: State) -> State:
 
 
 def grade(state: State) -> State:
-    """Judge whether the chunks can answer the question; nothing retrieved is weak for free."""
+    """Judge whether the chunks can answer the query; nothing retrieved is weak for free."""
     if not state["hits"]:
         return {**state, "strong": False}
-    prompt = GRADE.format(question=state["question"], context=_format_context(state["hits"]))
+    # The query, not the question: a verdict on different wording is a verdict on another search.
+    prompt = GRADE.format(question=state["query"], context=_format_context(state["hits"]))
     verdict, call = _invoke(GRADE_NODE, prompt)
     return {
         **state,
-        "strong": verdict.strip().upper().startswith("YES"),
+        "strong": verdict.strip().upper().startswith(GRADE_YES),
         "feedback": verdict.strip(),
         "calls": [*state["calls"], call],
     }
@@ -139,14 +156,15 @@ def generate(state: State) -> State:
     if not state["hits"]:
         # A generation call with no context can only invent or refuse, so refuse without paying.
         return {**state, "answer": REFUSAL}
-    prompt = ANSWER_A.format(question=state["question"], context=_format_context(state["hits"]))
+    # The query, not the question: a follow-up's pronoun has no referent without prior answer text.
+    prompt = ANSWER_A.format(question=state["query"], context=_format_context(state["hits"]))
     text, call = _invoke(GENERATE_NODE, prompt)
     return {**state, "answer": text, "calls": [*state["calls"], call]}
 
 
 def should_retry(state: State) -> str:
     """Re-search only when a search returned something weak and the retry budget still allows it."""
-    # Empty means the repo scope holds no chunks — the dense leg returns rows whatever the wording.
+    # Dense and hybrid return rows for any wording, so no hits means an empty scope, not a bad ask.
     if not state["hits"] or state["strong"]:
         return GENERATE_NODE
     # attempts counts retrievals, so the first one is not a retry.

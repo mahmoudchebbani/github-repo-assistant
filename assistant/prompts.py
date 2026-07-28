@@ -22,13 +22,15 @@ A: {answer}"""
 FEEDBACK = """The last search used the query "{query}" and the grader rejected it: {reason}
 Write a different query."""
 
-GRADE = """Can the context below answer the question? Reply with exactly one word,
-YES or NO, then a colon and a short reason.
+GRADE_YES = "YES"
 
-Question: {question}
+GRADE = f"""Can the context below answer the question? Reply with exactly one word,
+{GRADE_YES} or NO, then a colon and a short reason.
+
+Question: {{question}}
 
 Context:
-{context}
+{{context}}
 """
 
 ANSWER_A = f"""You answer questions about a GitHub repository using only the context below.
