@@ -12,7 +12,7 @@
       "title": "Questions per day",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
       "datasource": { "type": "postgres", "uid": "assistant" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] },
       "targets": [
         {
           "refId": "A",
@@ -26,6 +26,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "LLM call latency p50 / p95",
+      "timeFrom": "6h",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
       "datasource": { "type": "postgres", "uid": "assistant" },
       "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
@@ -43,6 +44,7 @@
       "type": "timeseries",
       "title": "Cumulative cost (completed turns)",
       "description": "Sums cost_usd on completed turns only; calls from an interrupted run are never written and so are excluded",
+      "timeFrom": "6h",
       "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
       "datasource": { "type": "postgres", "uid": "assistant" },
       "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 6 }, "overrides": [] },
@@ -62,11 +64,12 @@
       "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
       "datasource": { "type": "postgres", "uid": "assistant" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "values": true, "calcs": [], "fields": "" } },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT vote, count(*) FROM feedback GROUP BY vote",
+          "rawSql": "SELECT CASE WHEN vote = 1 THEN 'thumbs up' ELSE 'thumbs down' END AS vote, count(*) FROM feedback GROUP BY vote ORDER BY vote DESC",
           "datasource": { "type": "postgres", "uid": "assistant" }
         }
       ]
@@ -83,7 +86,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT attempts, count(*) FROM conversations GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT attempts::text AS attempts, count(*) FROM conversations GROUP BY 1 ORDER BY 1",
           "datasource": { "type": "postgres", "uid": "assistant" }
         }
       ]
