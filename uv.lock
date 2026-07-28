@@ -695,7 +695,7 @@ wheels = [
 [[package]]
 name = "github-repo-assistant"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "dlt", extra = ["postgres"] },
     { name = "fastembed" },

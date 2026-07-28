@@ -55,9 +55,7 @@ def answer(question: str) -> AnswerResult:
         completion_tokens=usage.get("output_tokens", 0),
         latency_ms=elapsed_ms,
     )
-    return AnswerResult(
-        text=str(response.content),
-        citations=[hit.citation for hit in hits],
-        attempts=1,
-        calls=[call],
-    )
+    text = str(response.content)
+    # A refusal cites nothing; otherwise list retrieved sources once each, in retrieval order.
+    citations = [] if text == REFUSAL else list(dict.fromkeys(hit.citation for hit in hits))
+    return AnswerResult(text=text, citations=citations, attempts=1, calls=[call])

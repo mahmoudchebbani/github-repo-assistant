@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "github-repo-assistant"
 version = "0.1.0"
@@ -26,10 +30,8 @@ dev = [
     "testcontainers[postgres]>=4.15.0",
 ]
 
-[tool.pytest.ini_options]
-# The project has no build-system/packaging, so pytest never sees the repo root
-# on sys.path by default; "assistant" would be unimportable from tests/ without this.
-pythonpath = ["."]
+[tool.hatch.build.targets.wheel]
+packages = ["assistant"]
 
 [tool.ruff]
 line-length = 100
