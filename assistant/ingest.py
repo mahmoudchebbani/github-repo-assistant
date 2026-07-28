@@ -83,13 +83,17 @@ def comments(repo: str) -> Iterator[dict[str, Any]]:
 
 
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """Translate a `**`/`*`/`?` glob to a regex; `**/` matches zero or more whole path segments."""
+    """Glob to regex: `**` matches any depth anywhere in the pattern, `*` matches one segment."""
     regex = ""
     i = 0
-    while i < len(pattern):
+    n = len(pattern)
+    while i < n:
         if pattern[i : i + 3] == "**/":
             regex += "(?:[^/]*/)*"
             i += 3
+        elif pattern[i : i + 2] == "**" and i + 2 == n:
+            regex += ".*"
+            i += 2
         elif pattern[i] == "*":
             regex += "[^/]*"
             i += 1
