@@ -10,7 +10,6 @@ from assistant.db import get_connection
 from assistant.embed import embed_query
 
 # The one definition of which columns become a Hit; every query below interpolates it.
-# repo is not selected: it never reaches Hit, only narrows WHERE, and citation already names it.
 _COLUMNS = "id, citation, title, url, text"
 
 _DENSE_QUERY = f"""
@@ -49,6 +48,7 @@ RRF_K = 60
 POOL_MULTIPLIER = 4
 
 
+# No repo field: WHERE already scopes it, and citation already names the repo.
 class Hit(BaseModel):
     """One retrieved chunk."""
 
@@ -71,7 +71,10 @@ def search_dense(
     vector = Vector(embed_query(query))
     if repo is None:
         return cur.execute(_DENSE_QUERY, (vector, k)).fetchall()
-    return cur.execute(_DENSE_QUERY_FOR_REPO, (repo, vector, k)).fetchall()
+    # HNSW filters after scanning the index, so a selective repo can starve LIMIT of real matches.
+    cur.execute("SET LOCAL hnsw.iterative_scan = strict_order")
+    # chunks.repo is always stored lower-case (ingest.py, index.py); match that here, not trust it.
+    return cur.execute(_DENSE_QUERY_FOR_REPO, (repo.lower(), vector, k)).fetchall()
 
 
 def search_lexical(
@@ -81,7 +84,7 @@ def search_lexical(
     cur = conn.cursor(row_factory=_as_hit)
     if repo is None:
         return cur.execute(_LEXICAL_QUERY, (query, query, k)).fetchall()
-    return cur.execute(_LEXICAL_QUERY_FOR_REPO, (repo, query, query, k)).fetchall()
+    return cur.execute(_LEXICAL_QUERY_FOR_REPO, (repo.lower(), query, query, k)).fetchall()
 
 
 def reciprocal_rank_fusion(rankings: list[list[str]], k: int = RRF_K) -> list[str]:

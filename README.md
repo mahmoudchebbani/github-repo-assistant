@@ -44,7 +44,7 @@ cd github-repo-assistant
 uv sync
 cp .env.example .env      # then set OPENAI_API_KEY and GITHUB_TOKEN
 docker compose up -d
-make ingest               # pull the repository named in REPO
+make ingest               # pull the repositories named in REPOS
 make index                # chunk, embed, and index it
 make app                  # http://localhost:8501
 ```

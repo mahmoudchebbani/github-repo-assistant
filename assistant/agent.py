@@ -35,7 +35,7 @@ def _format_context(hits: list[Hit]) -> str:
 
 
 def answer(question: str, repo: str | None = None) -> AnswerResult:
-    """Retrieve context and generate a cited answer; repo=None searches every configured repo."""
+    """Retrieve context and generate a cited answer; repo=None searches every repo in the index."""
     settings = get_settings()
     hits = retrieve(question, settings.retrieval_mode, settings.top_k, repo)
     if not hits:

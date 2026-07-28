@@ -109,7 +109,7 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
     return re.compile(f"^{regex}$")
 
 
-@dlt.resource(name="docs", write_disposition="replace")
+@dlt.resource(name="docs", write_disposition="merge", primary_key=("repo", "path"))
 def docs(repo: str) -> Iterator[dict[str, Any]]:
     """Yield one commit's snapshot of every blob matching `DOCS_GLOBS`, decoded from base64."""
     pattern = _glob_to_regex(get_settings().docs_globs)
