@@ -24,11 +24,12 @@ VOTES = {0: -1, 1: 1}
 @st.cache_resource
 def connection() -> psycopg.Connection:
     """Return the one long-lived connection; this script reruns on every click, connecting costs."""
+    # Before get_connection, which needs the vector type: opening the app first must not error.
+    with psycopg.connect(get_settings().database_url) as bootstrap:
+        init_db(bootstrap)
     conn = get_connection()
     # Autocommit because every session shares this one: a failed write must not abort theirs too.
     conn.autocommit = True
-    # Applied here as well as by the indexer, so a schema change reaches the app without a reindex.
-    init_db(conn)
     return conn
 
 
