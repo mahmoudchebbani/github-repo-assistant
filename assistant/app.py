@@ -79,10 +79,8 @@ for asked, result, conversation_id in exchanges:
     st.chat_message("user").write(asked)
     with st.chat_message("assistant"):
         st.markdown(result.text)
-        # Only what the answer cited by name: linking everything retrieved overstates its sourcing.
-        cited = [c for c in result.citations if f"[{c.label}]" in result.text]
-        if cited:
-            st.caption(" · ".join(f"[{c.label}]({c.url})" for c in cited))
+        if result.citations:
+            st.caption(" · ".join(f"[{c.label}]({c.url})" for c in result.citations))
         st.feedback(
             "thumbs",
             key=str(conversation_id),

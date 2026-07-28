@@ -49,7 +49,7 @@ class LLMCall(BaseModel):
 
 
 class Citation(BaseModel):
-    """One source the answer may cite: the label written in the text, and where it points."""
+    """One source the answer cited: the label written in the text, and where it points."""
 
     label: str
     url: str
@@ -219,7 +219,9 @@ def answer(
     final = GRAPH.invoke(start, {"recursion_limit": limit})
     text = final["answer"]
     # Substring, not equality: an exhausted loop generates from rejected context, so it paraphrases.
-    cited = [] if REFUSAL in text else final["hits"]
+    hits = [] if REFUSAL in text else final["hits"]
+    # Only the hits the answer named: every retrieved hit would overstate where it came from.
+    cited = [hit for hit in hits if f"[{hit.citation}]" in text]
     urls: dict[str, str] = {}
     for hit in cited:
         # An issue and its comments share a citation but not a url, so the best-ranked hit wins.
