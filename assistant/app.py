@@ -7,7 +7,14 @@ import streamlit as st
 
 from assistant.agent import AnswerResult, answer
 from assistant.config import get_settings
-from assistant.db import cost_usd, get_connection, save_conversation, save_feedback, save_llm_call
+from assistant.db import (
+    cost_usd,
+    get_connection,
+    init_db,
+    save_conversation,
+    save_feedback,
+    save_llm_call,
+)
 
 ALL_REPOS = "All repositories"
 # st.feedback("thumbs") reports 0 for the down thumb and 1 for the up one; feedback.vote stores ±1.
@@ -17,7 +24,12 @@ VOTES = {0: -1, 1: 1}
 @st.cache_resource
 def connection() -> psycopg.Connection:
     """Return the one long-lived connection; this script reruns on every click, connecting costs."""
-    return get_connection()
+    conn = get_connection()
+    # Autocommit because every session shares this one: a failed write must not abort theirs too.
+    conn.autocommit = True
+    # Applied here as well as by the indexer, so a schema change reaches the app without a reindex.
+    init_db(conn)
+    return conn
 
 
 def save_turn(repo: str | None, question: str, result: AnswerResult) -> UUID:
@@ -41,19 +53,20 @@ def save_turn(repo: str | None, question: str, result: AnswerResult) -> UUID:
 
 
 def record_vote(conversation_id: UUID) -> None:
-    """Store the thumb just clicked; Streamlit calls this when that turn's widget changes."""
+    """Store or clear this turn's vote; Streamlit calls this when that turn's thumbs change."""
     thumb = st.session_state[str(conversation_id)]
-    # Clicking the selected thumb again clears it, which is a retraction rather than a vote.
-    if thumb is not None:
-        save_feedback(connection(), conversation_id, VOTES[thumb])
+    # Clicking the selected thumb again clears it, and a retraction must leave nothing behind.
+    save_feedback(connection(), conversation_id, None if thumb is None else VOTES[thumb])
 
 
 st.title("github-repo-assistant")
 st.caption("Ask about the issues, pull requests and docs of an indexed repository.")
 
 choice = st.selectbox("Repository", [ALL_REPOS, *get_settings().repo_list()])
+# A transcript per repository, so switching does not answer a follow-up from the one just left.
+transcripts = st.session_state.setdefault("transcripts", {})
 # One entry per answered turn: the question asked, what came back, and the row it was written to.
-exchanges = st.session_state.setdefault("exchanges", [])
+exchanges = transcripts.setdefault(choice, [])
 
 question = st.chat_input("Ask about the repository")
 if question:
@@ -66,8 +79,10 @@ for asked, result, conversation_id in exchanges:
     st.chat_message("user").write(asked)
     with st.chat_message("assistant"):
         st.markdown(result.text)
-        if result.citations:
-            st.caption(" · ".join(f"[{c.label}]({c.url})" for c in result.citations))
+        # Show the sources the answer actually cited, or all of them when it cited none by name.
+        used = [c for c in result.citations if f"[{c.label}]" in result.text] or result.citations
+        if used:
+            st.caption(" · ".join(f"[{c.label}]({c.url})" for c in used))
         st.feedback(
             "thumbs",
             key=str(conversation_id),

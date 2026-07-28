@@ -25,7 +25,13 @@ _INSERT_LLM_CALL = """
     VALUES (%s, %s, %s, %s, %s, %s, %s)
 """
 
-_INSERT_FEEDBACK = "INSERT INTO feedback (conversation_id, vote) VALUES (%s, %s)"
+_UPSERT_FEEDBACK = """
+    INSERT INTO feedback (conversation_id, vote)
+    VALUES (%s, %s)
+    ON CONFLICT (conversation_id) DO UPDATE SET vote = EXCLUDED.vote
+"""
+
+_DELETE_FEEDBACK = "DELETE FROM feedback WHERE conversation_id = %s"
 
 
 def get_connection() -> psycopg.Connection:
@@ -86,7 +92,10 @@ def save_llm_call(
     conn.commit()
 
 
-def save_feedback(conn: psycopg.Connection, conversation_id: UUID, vote: int) -> None:
-    """Store one thumb, +1 or -1, against the turn it was given on."""
-    conn.execute(_INSERT_FEEDBACK, (conversation_id, vote))
+def save_feedback(conn: psycopg.Connection, conversation_id: UUID, vote: int | None) -> None:
+    """Store the one vote a turn carries, +1 or -1, replacing any earlier one; None retracts it."""
+    if vote is None:
+        conn.execute(_DELETE_FEEDBACK, (conversation_id,))
+    else:
+        conn.execute(_UPSERT_FEEDBACK, (conversation_id, vote))
     conn.commit()

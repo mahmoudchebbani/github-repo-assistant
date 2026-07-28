@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Databases created before the all-repositories option still have the old NOT NULL; drop it.
+-- Applied whole on every start-up: this catches an older database up and is a no-op on a new one.
 ALTER TABLE conversations ALTER COLUMN repo DROP NOT NULL;
 
 CREATE TABLE IF NOT EXISTS llm_calls (
@@ -49,4 +49,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 );
 
 CREATE INDEX IF NOT EXISTS llm_calls_conversation_id_idx ON llm_calls (conversation_id);
-CREATE INDEX IF NOT EXISTS feedback_conversation_id_idx  ON feedback (conversation_id);
+-- Unique, not merely indexed: one conversation holds one vote, which a later thumb replaces.
+CREATE UNIQUE INDEX IF NOT EXISTS feedback_one_vote_per_conversation ON feedback (conversation_id);
+-- That rule renamed the index, so an older database is still carrying the non-unique original.
+DROP INDEX IF EXISTS feedback_conversation_id_idx;

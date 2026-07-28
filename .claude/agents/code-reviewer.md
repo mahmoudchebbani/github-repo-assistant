@@ -57,10 +57,10 @@ exists to demonstrate. Do not suggest replacing them with a library call. Do fla
 6. **Commit hygiene.** Run `git log --format=%B <range>` over the diff's commits and check each
    message against the repository's stated authorship convention. A convention violation is an
    Important finding — far cheaper to amend before the history is published than after.
-7. **Leakage into tracked files.** `docs/`, `.superpowers/` and `CLAUDE.local.md` are gitignored and
-   hold local working context. A tracked file that links into them gives a cloner a dangling
-   pointer; a tracked file that copies their contents publishes what was meant to stay local. Both
-   are Important findings.
+7. **Leakage into tracked files.** Some working context — plans, notes, private instructions — is
+   deliberately gitignored. A tracked file that links into an ignored path hands a cloner a dangling
+   pointer; a tracked file that quotes one publishes what was meant to stay local. Both are Important
+   findings. Settle which is which with `git check-ignore -v <path>` rather than by the name.
 
 ## Verify before you flag
 
