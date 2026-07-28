@@ -19,14 +19,16 @@ _MODE_KEY = "RETRIEVAL_MODE"
 
 def hit_rate(results: list[list[str]], expected: list[str]) -> float:
     """Fraction of queries whose expected chunk appears in the retrieved ids."""
-    found = sum(1 for retrieved, target in zip(results, expected) if target in retrieved)
+    found = sum(
+        1 for retrieved, target in zip(results, expected, strict=True) if target in retrieved
+    )
     return found / len(expected)
 
 
 def mean_reciprocal_rank(results: list[list[str]], expected: list[str]) -> float:
     """Mean of 1/rank of the expected chunk, counting 0 when it is absent."""
     total = 0.0
-    for retrieved, target in zip(results, expected):
+    for retrieved, target in zip(results, expected, strict=True):
         if target in retrieved:
             total += 1.0 / (retrieved.index(target) + 1)
     return total / len(expected)
