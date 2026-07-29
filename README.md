@@ -33,9 +33,9 @@ This indexes that history and answers questions over it, citing what it used.
 Citations render inline and again as links under the answer. Each turn takes a 👍/👎, which is stored
 and charted.
 
-Another working example on fastapi's github repo:
+Here is another example on fastapi's github repo:
 
-<img width="1314" height="827" alt="Screenshot 2026-07-29 at 11 16 18 pm" src="https://github.com/user-attachments/assets/4c40ba39-ad49-44a2-af79-770a5d76c51a" />
+<img width="879" height="789" alt="Screenshot 2026-07-29 at 11 18 25 pm" src="https://github.com/user-attachments/assets/601aa7f8-ba39-4977-8c50-4a01572ee5e6" />
 
 ## How it works
 
