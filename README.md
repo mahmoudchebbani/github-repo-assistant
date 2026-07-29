@@ -33,6 +33,10 @@ This indexes that history and answers questions over it, citing what it used.
 Citations render inline and again as links under the answer. Each turn takes a 👍/👎, which is stored
 and charted.
 
+Another working example on fastapi's github repo:
+
+<img width="1314" height="827" alt="Screenshot 2026-07-29 at 11 16 18 pm" src="https://github.com/user-attachments/assets/4c40ba39-ad49-44a2-af79-770a5d76c51a" />
+
 ## How it works
 
 ```
@@ -64,6 +68,9 @@ itself.
 You also need an [OpenAI key](https://platform.openai.com/api-keys) and a
 [GitHub token](https://github.com/settings/tokens). A classic token with no scopes ticked is enough
 to read public repositories.
+
+Note: the default repo set in the .env files in the llm course's repo so that ingestion and embedding is quick. Change the value
+of `REPO` to a repo or a list of repos of your choice to ingest if you would like to test with something else on first try.
 
 ```bash
 git clone https://github.com/mahmoudchebbani/github-repo-assistant.git
