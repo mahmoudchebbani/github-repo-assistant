@@ -25,12 +25,12 @@ __pycache__/
 .idea/
 .vscode/
 
-# Docs stay local — specs, plans, status ledger, and notes are never pushed to the remote
+# Local working notes
 docs/
 
 # Claude Code (see https://code.claude.com/docs/en/claude-directory)
 .claude/settings.local.json
 CLAUDE.local.md
 
-# Superpowers SDD scratch (task briefs, reports, review packages, progress ledger)
+# Local scratch
 .superpowers/

@@ -8,7 +8,7 @@ paths:
 
 Read before writing or running tests in `github-repo-assistant`.
 
-**The suite is deliberately small — six tests, one per layer.** This project's quality evidence is its
+**The suite is deliberately small. Six tests, one per layer.** This project's quality evidence is its
 offline evaluation scripts under `eval/`, not a coverage number. A large suite here would cost more
 than it protects.
 
@@ -27,7 +27,7 @@ Do not grow past these without being asked:
 
 ## What earns a test here
 
-- **A pure function with a real invariant** — chunk packing, fusion ordering, citation format.
+- **A pure function with a real invariant.** Chunk packing, fusion ordering, citation format.
 - **A refusal path.** The most valuable single test in a RAG system is the one proving it says "I
   don't know" instead of inventing. It is the failure that costs the most and shows the least.
 - **A round-trip through a real store**, so type coercion is exercised rather than assumed.
@@ -43,17 +43,17 @@ Do not grow past these without being asked:
 ## How
 
 - **Mock only the network edge.** GitHub responses are recorded fixtures. Nothing we wrote ourselves
-  is ever mocked — a test that mocks our own function tests the mock.
+  is ever mocked. A test that mocks our own function tests the mock.
 - **Postgres tests use a throwaway `pgvector/pgvector:pg17` container** via `testcontainers`, never a
-  development database. The vector and full-text layers then run for real, with nothing faked — which
+  development database. The vector and full-text layers then run for real, with nothing faked, which
   matters, because their behaviour (HNSW recall, English stemming) is the thing most likely to
   surprise.
-- **`test_fusion.py` is pure** — no database, no network. RRF is the cheapest thing in the project to
+- **`test_fusion.py` is pure.** No database, no network. RRF is the cheapest thing in the project to
   prove correct, so prove it.
 - **Test names are sentences.** `test_an_empty_index_produces_a_refusal`, not `test_agent_2`.
 - **Watch a new test fail before making it pass**, and check it fails for the reason you expect. A
   test that has never been red has proven nothing.
 - **No test reaches the live GitHub API or OpenAI.** The suite must pass with no API keys set. Docker
   is required, because Postgres is real; network credentials are not.
-- **The OpenAI client is the network edge, so stubbing it is allowed** — that is how `test_agent.py`
+- **The OpenAI client is the network edge, so stubbing it is allowed.** That is how `test_agent.py`
   runs offline. Stubbing anything we wrote is not.

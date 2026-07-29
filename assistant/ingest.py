@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _client() -> RESTClient:
-    """A GitHub client; paginator is explicit — dlt auto-detect can silently drop pages past 1."""
+    """A GitHub client. Paginator is explicit, dlt auto-detect can silently drop pages past 1."""
     return RESTClient(
         base_url=GITHUB_API,
         auth=BearerTokenAuth(token=get_settings().github_token),
@@ -112,6 +112,7 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 @dlt.resource(name="docs", write_disposition="merge", primary_key=("repo", "path"))
 def docs(repo: str) -> Iterator[dict[str, Any]]:
     """Yield one commit's snapshot of every blob matching `DOCS_GLOBS`, decoded from base64."""
+    # Case-sensitive like git's own globs: the default skips README.MD, add `**/*.MD` to catch it.
     patterns = [_glob_to_regex(glob) for glob in get_settings().docs_globs_list()]
     client = _client()
     branch = client.get(f"/repos/{repo}").json()["default_branch"]
